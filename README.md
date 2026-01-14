@@ -71,9 +71,9 @@ Required repository secrets:
 - `DOCKERHUB_TOKEN` — a Docker Hub access token (recommended) or password
 
 Image names used by the workflow (defaults):
-- `${{ secrets.DOCKERHUB_USERNAME }}/otp-backend` (tags: `latest`, commit SHA)
-- `${{ secrets.DOCKERHUB_USERNAME }}/otp-frontend` (tags: `latest`, commit SHA)
+- `${{ secrets.DOCKERHUB_USERNAME }}/otp-backend` (tags: `latest` (main), tag name (on tag push), commit SHA)
+- `${{ secrets.DOCKERHUB_USERNAME }}/otp-frontend` (tags: `latest` (main), tag name (on tag push), commit SHA)
 
-To trigger: push to `main` or use the **Actions** tab → **Build and Publish Docker images** → **Run workflow**.
+To trigger: push to `main`, push a Git tag matching `v*` (e.g., `v1.2.3`) to publish a versioned image and create a GitHub release, or use the Actions tab → **Build and Publish Docker images** → **Run workflow**.
 
 If you'd like, I can also add a development script to run backend and frontend concurrently or a short `Makefile` with common commands. Let me know which you prefer.

@@ -62,4 +62,18 @@ The frontend expects the backend to be available at `/send-otp` and `/verify-otp
 
 ---
 
+## CI / Docker Hub (GitHub Actions) 🔁
+
+A GitHub Actions workflow is included to build images for the backend and frontend and push them to Docker Hub when you push to `main` (or trigger manually).
+
+Required repository secrets:
+- `DOCKERHUB_USERNAME` — your Docker Hub username
+- `DOCKERHUB_TOKEN` — a Docker Hub access token (recommended) or password
+
+Image names used by the workflow (defaults):
+- `${{ secrets.DOCKERHUB_USERNAME }}/otp-backend` (tags: `latest`, commit SHA)
+- `${{ secrets.DOCKERHUB_USERNAME }}/otp-frontend` (tags: `latest`, commit SHA)
+
+To trigger: push to `main` or use the **Actions** tab → **Build and Publish Docker images** → **Run workflow**.
+
 If you'd like, I can also add a development script to run backend and frontend concurrently or a short `Makefile` with common commands. Let me know which you prefer.

@@ -13,6 +13,7 @@ function generateOTP() {
 /* SEND OTP */
 app.post("/send-otp", async (req, res) => {
   const { phone } = req.body;
+
   const otp = generateOTP();
   const expires = new Date(Date.now() + 5 * 60000);
 
@@ -21,7 +22,7 @@ app.post("/send-otp", async (req, res) => {
     [phone, otp, expires]
   );
 
-  console.log("OTP (for testing):", otp); // SMS mock
+  console.log("OTP (for testing):", otp);
 
   res.json({ message: "OTP sent" });
 });
@@ -35,19 +36,16 @@ app.post("/verify-otp", async (req, res) => {
     [phone]
   );
 
-  if (!result.rows.length) {
+  if (!result.rows.length)
     return res.status(400).json({ message: "OTP not found" });
-  }
 
   const record = result.rows[0];
 
-  if (record.otp !== otp) {
+  if (record.otp !== otp)
     return res.status(401).json({ message: "Invalid OTP" });
-  }
 
-  if (new Date() > record.expires_at) {
+  if (new Date() > record.expires_at)
     return res.status(401).json({ message: "OTP expired" });
-  }
 
   res.json({ message: "Login success" });
 });
@@ -56,12 +54,21 @@ app.post("/verify-otp", async (req, res) => {
 app.post("/register", async (req, res) => {
   const { name, email, phone } = req.body;
 
+  // check existing user
+  const exist = await db.query(
+    "SELECT * FROM users WHERE phone=$1",
+    [phone]
+  );
+
+  if (exist.rows.length)
+    return res.status(400).json({ message: "User already exists" });
+
   await db.query(
     "INSERT INTO users(name,email,phone) VALUES($1,$2,$3)",
     [name, email, phone]
   );
 
-  res.json({ message: "User registered" });
+  res.json({ message: "User registered successfully" });
 });
 
 app.listen(4000, () =>

@@ -9,6 +9,7 @@ on:
 env:
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/otp-backend
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/otp-frontend
+  DB_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/otp-db
 
 jobs:
   build-and-push:
@@ -46,6 +47,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # ---------------- BACKEND ----------------
       - name: Build and push backend image
         uses: docker/build-push-action@v4
         with:
@@ -57,6 +59,7 @@ jobs:
             ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_SHA }}
           platforms: linux/amd64,linux/arm64
 
+      # ---------------- FRONTEND ----------------
       - name: Build and push frontend image
         uses: docker/build-push-action@v4
         with:
@@ -68,10 +71,23 @@ jobs:
             ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_SHA }}
           platforms: linux/amd64,linux/arm64
 
+      # ---------------- DATABASE ----------------
+      - name: Build and push database image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./db
+          file: ./db/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DB_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.DB_IMAGE }}:${{ env.IMAGE_SHA }}
+          platforms: linux/amd64,linux/arm64
+
       - name: Output image names
         run: |
           echo "Backend image: $BACKEND_IMAGE:${IMAGE_TAG}"
           echo "Frontend image: $FRONTEND_IMAGE:${IMAGE_TAG}"
+          echo "Database image: $DB_IMAGE:${IMAGE_TAG}"
 
       - name: Create GitHub release for tag (if applicable)
         if: startsWith(github.ref, 'refs/tags/')
@@ -86,4 +102,7 @@ jobs:
 
       - name: Done
         run: |
-          echo "Published images: ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}, ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}"
+          echo "Published images:"
+          echo "$BACKEND_IMAGE:${IMAGE_TAG}"
+          echo "$FRONTEND_IMAGE:${IMAGE_TAG}"
+          echo "$DB_IMAGE:${IMAGE_TAG}"

@@ -3,19 +3,37 @@ name: Build and Publish Docker images
 on:
   workflow_dispatch:
     inputs:
-      backend_tag:
-        description: "Backend image tag (ex: v1.0-backend)"
+      build_backend:
+        description: "Build BACKEND image?"
         required: true
+        default: "true"
+        type: boolean
+
+      build_frontend:
+        description: "Build FRONTEND image?"
+        required: true
+        default: "true"
+        type: boolean
+
+      build_db:
+        description: "Build DATABASE image?"
+        required: true
+        default: "true"
+        type: boolean
+
+      backend_tag:
+        description: "Backend tag (if enabled)"
+        required: false
         default: "backend-latest"
 
       frontend_tag:
-        description: "Frontend image tag (ex: v1.0-frontend)"
-        required: true
+        description: "Frontend tag (if enabled)"
+        required: false
         default: "frontend-latest"
 
       db_tag:
-        description: "Database image tag (ex: v1.0-db)"
-        required: true
+        description: "DB tag (if enabled)"
+        required: false
         default: "db-latest"
 
 env:
@@ -28,30 +46,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set tags from input
+      - name: Set tags
         run: |
           echo "BACKEND_TAG=${{ github.event.inputs.backend_tag }}" >> $GITHUB_ENV
           echo "FRONTEND_TAG=${{ github.event.inputs.frontend_tag }}" >> $GITHUB_ENV
           echo "DB_TAG=${{ github.event.inputs.db_tag }}" >> $GITHUB_ENV
-          echo "IMAGE_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
+      - name: Setup Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to Docker Hub
+      - name: Docker login
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # ---------------- BACKEND ----------------
-      - name: Build & push backend
+      # -------- BACKEND --------
+      - name: Build backend
+        if: ${{ github.event.inputs.build_backend == 'true' }}
         uses: docker/build-push-action@v4
         with:
           context: ./backend
@@ -59,10 +74,10 @@ jobs:
           push: true
           tags: |
             ${{ env.BACKEND_IMAGE }}:${{ env.BACKEND_TAG }}
-            ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_SHA }}
 
-      # ---------------- FRONTEND ----------------
-      - name: Build & push frontend
+      # -------- FRONTEND --------
+      - name: Build frontend
+        if: ${{ github.event.inputs.build_frontend == 'true' }}
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
@@ -70,10 +85,10 @@ jobs:
           push: true
           tags: |
             ${{ env.FRONTEND_IMAGE }}:${{ env.FRONTEND_TAG }}
-            ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_SHA }}
 
-      # ---------------- DATABASE ----------------
-      - name: Build & push database
+      # -------- DATABASE --------
+      - name: Build database
+        if: ${{ github.event.inputs.build_db == 'true' }}
         uses: docker/build-push-action@v4
         with:
           context: ./db
@@ -81,10 +96,9 @@ jobs:
           push: true
           tags: |
             ${{ env.DB_IMAGE }}:${{ env.DB_TAG }}
-            ${{ env.DB_IMAGE }}:${{ env.IMAGE_SHA }}
 
-      - name: Output images
+      - name: Summary
         run: |
-          echo "Backend  : $BACKEND_IMAGE:${BACKEND_TAG}"
-          echo "Frontend : $FRONTEND_IMAGE:${FRONTEND_TAG}"
-          echo "Database : $DB_IMAGE:${DB_TAG}"
+          echo "Backend  build: ${{ github.event.inputs.build_backend }}"
+          echo "Frontend build: ${{ github.event.inputs.build_frontend }}"
+          echo "DB build      : ${{ github.event.inputs.build_db }}"

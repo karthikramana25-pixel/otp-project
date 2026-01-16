@@ -113,3 +113,9 @@ button:hover {
     width: 100%;
   }
 }
+.admin{
+ background:#eee;
+ padding:10px;
+ border-radius:6px;
+}
+

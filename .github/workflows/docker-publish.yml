@@ -3,10 +3,20 @@ name: Build and Publish Docker images
 on:
   workflow_dispatch:
     inputs:
-      image_tag:
-        description: "Enter Docker image tag (example: v1.0, prod, test)"
+      backend_tag:
+        description: "Backend image tag (ex: v1.0-backend)"
         required: true
-        default: "manual"
+        default: "backend-latest"
+
+      frontend_tag:
+        description: "Frontend image tag (ex: v1.0-frontend)"
+        required: true
+        default: "frontend-latest"
+
+      db_tag:
+        description: "Database image tag (ex: v1.0-db)"
+        required: true
+        default: "db-latest"
 
 env:
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/otp-backend
@@ -21,11 +31,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set image tag from input
+      - name: Set tags from input
         run: |
-          echo "IMAGE_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
+          echo "BACKEND_TAG=${{ github.event.inputs.backend_tag }}" >> $GITHUB_ENV
+          echo "FRONTEND_TAG=${{ github.event.inputs.frontend_tag }}" >> $GITHUB_ENV
+          echo "DB_TAG=${{ github.event.inputs.db_tag }}" >> $GITHUB_ENV
           echo "IMAGE_SHA=${GITHUB_SHA}" >> $GITHUB_ENV
-          echo "Using tag: ${{ github.event.inputs.image_tag }}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -33,57 +44,47 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Log in to Docker Hub
+      - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # ---------------- BACKEND ----------------
-      - name: Build and push backend image
+      - name: Build & push backend
         uses: docker/build-push-action@v4
         with:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.BACKEND_IMAGE }}:${{ env.BACKEND_TAG }}
             ${{ env.BACKEND_IMAGE }}:${{ env.IMAGE_SHA }}
-          platforms: linux/amd64,linux/arm64
 
       # ---------------- FRONTEND ----------------
-      - name: Build and push frontend image
+      - name: Build & push frontend
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.FRONTEND_IMAGE }}:${{ env.FRONTEND_TAG }}
             ${{ env.FRONTEND_IMAGE }}:${{ env.IMAGE_SHA }}
-          platforms: linux/amd64,linux/arm64
 
       # ---------------- DATABASE ----------------
-      - name: Build and push database image
+      - name: Build & push database
         uses: docker/build-push-action@v4
         with:
           context: ./db
           file: ./db/Dockerfile
           push: true
           tags: |
-            ${{ env.DB_IMAGE }}:${{ env.IMAGE_TAG }}
+            ${{ env.DB_IMAGE }}:${{ env.DB_TAG }}
             ${{ env.DB_IMAGE }}:${{ env.IMAGE_SHA }}
-          platforms: linux/amd64,linux/arm64
 
-      - name: Output image names
+      - name: Output images
         run: |
-          echo "Backend image: $BACKEND_IMAGE:${IMAGE_TAG}"
-          echo "Frontend image: $FRONTEND_IMAGE:${IMAGE_TAG}"
-          echo "Database image: $DB_IMAGE:${IMAGE_TAG}"
-
-      - name: Done
-        run: |
-          echo "Published images:"
-          echo "$BACKEND_IMAGE:${IMAGE_TAG}"
-          echo "$FRONTEND_IMAGE:${IMAGE_TAG}"
-          echo "$DB_IMAGE:${IMAGE_TAG}"
+          echo "Backend  : $BACKEND_IMAGE:${BACKEND_TAG}"
+          echo "Frontend : $FRONTEND_IMAGE:${FRONTEND_TAG}"
+          echo "Database : $DB_IMAGE:${DB_TAG}"

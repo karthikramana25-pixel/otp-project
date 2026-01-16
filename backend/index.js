@@ -2,8 +2,16 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./db");
 const jwt = require("jsonwebtoken");
-
+const nodemailer = require("nodemailer");
 const SECRET = process.env.JWT_SECRET || "mysecret";
+
+const mailer = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "yourmail@gmail.com",
+    pass: "APP_PASSWORD"
+  }
+});
 
 const app = express();
 app.use(cors());
@@ -106,6 +114,56 @@ app.post("/register", async (req, res) => {
 
   res.json({ message: "User registered successfully" });
 });
+app.post("/send-email-otp", async (req,res)=>{
+  const { email } = req.body;
+  const otp = generateOTP();
+  const expires = new Date(Date.now() + 5*60000);
+
+  await db.query(
+    "INSERT INTO otps(phone,otp,expires_at) VALUES($1,$2,$3)",
+    [email, otp, expires]
+  );
+
+  await mailer.sendMail({
+    to: email,
+    subject: "Your OTP",
+    text: `Your OTP is ${otp}`
+  });
+
+  res.json({message:"Email OTP sent"});
+});
+app.post("/forgot-password", async (req,res)=>{
+  const { email } = req.body;
+
+  const user = await db.query(
+    "SELECT * FROM users WHERE email=$1",
+    [email]
+  );
+
+  if(!user.rows.length)
+    return res.status(404).json({message:"User not found"});
+
+  res.json({message:"OTP sent to email"});
+});
+app.get("/profile", auth, async (req,res)=>{
+  const user = await db.query(
+    "SELECT name,email,phone FROM users WHERE phone=$1",
+    [req.user.phone]
+  );
+
+  res.json(user.rows[0]);
+});
+app.get("/admin/users", auth, async (req,res)=>{
+  if(req.user.phone!=="ADMIN_PHONE")
+    return res.sendStatus(403);
+
+  const users = await db.query(
+    "SELECT id,name,email,phone FROM users"
+  );
+
+  res.json(users.rows);
+});
+
 
 /* ================= START ================= */
 app.listen(4000, () =>

@@ -3,8 +3,15 @@ const cors = require("cors");
 const db = require("./db");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const SECRET = process.env.JWT_SECRET || "mysecret";
 
+const SECRET = process.env.JWT_SECRET || "mysecret";
+const ADMIN_PHONE = "919999999999"; // change this
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+/* ================= MAIL ================= */
 const mailer = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -13,15 +20,12 @@ const mailer = nodemailer.createTransport({
   }
 });
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
+/* ================= UTIL ================= */
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-/* ================= SEND OTP ================= */
+/* ================= SEND SMS OTP ================= */
 app.post("/send-otp", async (req, res) => {
   const { phone } = req.body;
 
@@ -29,11 +33,12 @@ app.post("/send-otp", async (req, res) => {
   const expires = new Date(Date.now() + 5 * 60000);
 
   await db.query(
-    "INSERT INTO otps(phone,otp,expires_at) VALUES($1,$2,$3)",
+    `INSERT INTO otps(identifier,otp,purpose,expires_at)
+     VALUES($1,$2,'login',$3)`,
     [phone, otp, expires]
   );
 
-  console.log("OTP (for testing):", otp);
+  console.log("OTP (testing):", otp);
 
   res.json({ message: "OTP sent" });
 });
@@ -43,7 +48,9 @@ app.post("/verify-otp", async (req, res) => {
   const { phone, otp } = req.body;
 
   const result = await db.query(
-    "SELECT * FROM otps WHERE phone=$1 ORDER BY id DESC LIMIT 1",
+    `SELECT * FROM otps
+     WHERE identifier=$1 AND purpose='login'
+     ORDER BY id DESC LIMIT 1`,
     [phone]
   );
 
@@ -58,7 +65,6 @@ app.post("/verify-otp", async (req, res) => {
   if (new Date() > record.expires_at)
     return res.status(401).json({ message: "OTP expired" });
 
-  // ✅ Generate JWT AFTER OTP validation
   const token = jwt.sign(
     { phone },
     SECRET,
@@ -74,7 +80,6 @@ app.post("/verify-otp", async (req, res) => {
 /* ================= JWT MIDDLEWARE ================= */
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
-
   if (!token)
     return res.status(401).json({ message: "Token missing" });
 
@@ -87,21 +92,13 @@ function auth(req, res, next) {
   });
 }
 
-/* ================= PROTECTED API ================= */
-app.get("/profile", auth, (req, res) => {
-  res.json({
-    message: "Protected data",
-    phone: req.user.phone
-  });
-});
-
 /* ================= REGISTER ================= */
 app.post("/register", async (req, res) => {
   const { name, email, phone } = req.body;
 
   const exist = await db.query(
-    "SELECT * FROM users WHERE phone=$1",
-    [phone]
+    "SELECT * FROM users WHERE phone=$1 OR email=$2",
+    [phone, email]
   );
 
   if (exist.rows.length)
@@ -112,26 +109,32 @@ app.post("/register", async (req, res) => {
     [name, email, phone]
   );
 
-  res.json({ message: "User registered successfully" });
+  res.json({ message: "User registered" });
 });
+
+/* ================= EMAIL OTP ================= */
 app.post("/send-email-otp", async (req,res)=>{
   const { email } = req.body;
+
   const otp = generateOTP();
   const expires = new Date(Date.now() + 5*60000);
 
   await db.query(
-    "INSERT INTO otps(phone,otp,expires_at) VALUES($1,$2,$3)",
+    `INSERT INTO otps(identifier,otp,purpose,expires_at)
+     VALUES($1,$2,'forgot',$3)`,
     [email, otp, expires]
   );
 
   await mailer.sendMail({
     to: email,
-    subject: "Your OTP",
+    subject: "Password reset OTP",
     text: `Your OTP is ${otp}`
   });
 
   res.json({message:"Email OTP sent"});
 });
+
+/* ================= FORGOT PASSWORD ================= */
 app.post("/forgot-password", async (req,res)=>{
   const { email } = req.body;
 
@@ -145,25 +148,28 @@ app.post("/forgot-password", async (req,res)=>{
 
   res.json({message:"OTP sent to email"});
 });
+
+/* ================= PROFILE ================= */
 app.get("/profile", auth, async (req,res)=>{
   const user = await db.query(
-    "SELECT name,email,phone FROM users WHERE phone=$1",
+    "SELECT name,email,phone,role FROM users WHERE phone=$1",
     [req.user.phone]
   );
 
   res.json(user.rows[0]);
 });
+
+/* ================= ADMIN ================= */
 app.get("/admin/users", auth, async (req,res)=>{
-  if(req.user.phone!=="ADMIN_PHONE")
+  if(req.user.phone !== ADMIN_PHONE)
     return res.sendStatus(403);
 
   const users = await db.query(
-    "SELECT id,name,email,phone FROM users"
+    "SELECT id,name,email,phone,role FROM users"
   );
 
   res.json(users.rows);
 });
-
 
 /* ================= START ================= */
 app.listen(4000, () =>

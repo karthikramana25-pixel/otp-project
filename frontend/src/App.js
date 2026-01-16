@@ -197,5 +197,29 @@ function App() {
     </div>
   );
 }
+/* ADD STEPS */
+const [step,setStep]=useState("login");
+
+/* FORGOT */
+{step==="forgot" && (
+<>
+<h2>Forgot Password</h2>
+<input placeholder="Email"
+ onChange={e=>setEmail(e.target.value)} />
+<button onClick={sendEmailOtp}>Send Email OTP</button>
+<p className="link" onClick={()=>setStep("login")}>
+Back to login</p>
+</>
+)}
+{step==="profile" && (
+<>
+<h2>My Profile</h2>
+<p>Name: {profile.name}</p>
+<p>Email: {profile.email}</p>
+<p>Phone: {profile.phone}</p>
+<button onClick={()=>setStep("dashboard")}>
+Back</button>
+</>
+)}
 
 export default App;

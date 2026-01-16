@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db");
+const jwt = require("jsonwebtoken");
+
+const SECRET = process.env.JWT_SECRET || "mysecret";
 
 const app = express();
 app.use(cors());
@@ -10,7 +13,7 @@ function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-/* SEND OTP */
+/* ================= SEND OTP ================= */
 app.post("/send-otp", async (req, res) => {
   const { phone } = req.body;
 
@@ -27,7 +30,7 @@ app.post("/send-otp", async (req, res) => {
   res.json({ message: "OTP sent" });
 });
 
-/* VERIFY OTP */
+/* ================= VERIFY OTP ================= */
 app.post("/verify-otp", async (req, res) => {
   const { phone, otp } = req.body;
 
@@ -47,14 +50,47 @@ app.post("/verify-otp", async (req, res) => {
   if (new Date() > record.expires_at)
     return res.status(401).json({ message: "OTP expired" });
 
-  res.json({ message: "Login success" });
+  // ✅ Generate JWT AFTER OTP validation
+  const token = jwt.sign(
+    { phone },
+    SECRET,
+    { expiresIn: "1h" }
+  );
+
+  res.json({
+    message: "Login success",
+    token
+  });
 });
 
-/* REGISTER */
+/* ================= JWT MIDDLEWARE ================= */
+function auth(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token)
+    return res.status(401).json({ message: "Token missing" });
+
+  jwt.verify(token, SECRET, (err, user) => {
+    if (err)
+      return res.status(403).json({ message: "Invalid token" });
+
+    req.user = user;
+    next();
+  });
+}
+
+/* ================= PROTECTED API ================= */
+app.get("/profile", auth, (req, res) => {
+  res.json({
+    message: "Protected data",
+    phone: req.user.phone
+  });
+});
+
+/* ================= REGISTER ================= */
 app.post("/register", async (req, res) => {
   const { name, email, phone } = req.body;
 
-  // check existing user
   const exist = await db.query(
     "SELECT * FROM users WHERE phone=$1",
     [phone]
@@ -71,6 +107,7 @@ app.post("/register", async (req, res) => {
   res.json({ message: "User registered successfully" });
 });
 
+/* ================= START ================= */
 app.listen(4000, () =>
   console.log("Backend running on port 4000")
 );

@@ -19,7 +19,32 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [users, setUsers] = useState([]);
 
-  /* ================= TIMER ================= */
+  const [dark, setDark] = useState(false);
+  const [lang, setLang] = useState("en");
+  const [showStory, setShowStory] = useState(false);
+
+  const text = {
+    en: {
+      title: "SK ORGANICS",
+      tagline: "Fresh • Natural • Healthy",
+      mobile: "Enter mobile number",
+      send: "Send OTP",
+      story: "Our Farmer Story",
+      register: "Register",
+      forgot: "Forgot password?"
+    },
+    ta: {
+      title: "எஸ்.கே ஆர்கானிக்ஸ்",
+      tagline: "சுத்தம் • இயற்கை • ஆரோக்கியம்",
+      mobile: "மொபைல் எண்ணை உள்ளிடவும்",
+      send: "OTP அனுப்பவும்",
+      story: "விவசாயி கதை",
+      register: "பதிவு செய்ய",
+      forgot: "கடவுச்சொல் மறந்துவிட்டதா?"
+    }
+  };
+
+  /* TIMER */
   useEffect(() => {
     if (step === "verify" && timer > 0) {
       const t = setTimeout(() => setTimer(timer - 1), 1000);
@@ -27,7 +52,7 @@ function App() {
     }
   }, [timer, step]);
 
-  /* ================= SEND OTP ================= */
+  /* SEND OTP */
   const sendOtp = async () => {
     setLoading(true);
     setError("");
@@ -49,7 +74,7 @@ function App() {
     setStep("verify");
   };
 
-  /* ================= VERIFY OTP ================= */
+  /* VERIFY OTP */
   const verifyOtp = async () => {
     setLoading(true);
     setError("");
@@ -72,7 +97,7 @@ function App() {
     setStep("dashboard");
   };
 
-  /* ================= REGISTER ================= */
+  /* REGISTER */
   const register = async () => {
     setLoading(true);
     setError("");
@@ -95,7 +120,7 @@ function App() {
     setStep("login");
   };
 
-  /* ================= SEND EMAIL OTP ================= */
+  /* EMAIL OTP */
   const sendEmailOtp = async () => {
     setLoading(true);
     setError("");
@@ -116,7 +141,7 @@ function App() {
     alert("OTP sent to your email");
   };
 
-  /* ================= PROFILE ================= */
+  /* PROFILE */
   const loadProfile = async () => {
     const res = await fetch("/profile", {
       headers: {
@@ -129,7 +154,7 @@ function App() {
     setStep("profile");
   };
 
-  /* ================= ADMIN ================= */
+  /* ADMIN */
   const loadUsers = async () => {
     const res = await fetch("/admin/users", {
       headers: {
@@ -143,167 +168,191 @@ function App() {
   };
 
   return (
-    <div className="page">
-      <div className="card">
+    <div className={dark ? "bg dark" : "bg"}>
 
-        <div className="image-box">
-          <img
-            src="https://images.unsplash.com/photo-1542838132-92c53300491e"
-            alt="shop"
-          />
-        </div>
+      {/* FALLING LEAVES */}
+      <div className="leaves"></div>
 
-        <div className="form-box">
+      {/* TOP BAR */}
+      <div className="top-bar">
+        <button onClick={() => setDark(!dark)}>🌙</button>
+        <button onClick={() => setLang(lang === "en" ? "ta" : "en")}>
+          {lang === "en" ? "தமிழ்" : "English"}
+        </button>
+      </div>
 
-          {/* LOGIN */}
-          {step === "login" && (
-            <>
-              <h2>Login with OTP</h2>
+      <div className="overlay">
 
-              <input
-                placeholder="Mobile number"
-                onChange={e => setPhone(e.target.value)}
-              />
+        <div className="login-card">
 
-              <button onClick={sendOtp}>
-                {loading ? "Sending..." : "Send OTP"}
-              </button>
+          {/* LEFT IMAGE */}
+          <div className="left">
+            <img
+              src="https://images.unsplash.com/photo-1576402187871-8dbf22c99c4c"
+              alt="organic fruits"
+            />
+          </div>
 
-              <p className="link" onClick={() => setStep("register")}>
-                Register
-              </p>
+          {/* RIGHT FORM */}
+          <div className="right">
 
-              <p className="link" onClick={() => setStep("forgot")}>
-                Forgot password?
-              </p>
-            </>
-          )}
+            <h2>{text[lang].title}</h2>
+            <p>{text[lang].tagline}</p>
 
-          {/* VERIFY */}
-          {step === "verify" && (
-            <>
-              <h2>Verify OTP</h2>
+            {/* LOGIN */}
+            {step === "login" && (
+              <>
+                <input
+                  placeholder={text[lang].mobile}
+                  onChange={e => setPhone(e.target.value)}
+                />
 
-              <input
-                placeholder="Enter OTP"
-                onChange={e => setOtp(e.target.value)}
-              />
+                <button className="pulse" onClick={sendOtp}>
+                  {loading ? "Sending..." : text[lang].send}
+                </button>
 
-              <button onClick={verifyOtp}>
-                {loading ? "Verifying..." : "Verify"}
-              </button>
-
-              <p className="timer">
-                Resend OTP in {timer}s
-              </p>
-            </>
-          )}
-
-          {/* REGISTER */}
-          {step === "register" && (
-            <>
-              <h2>Register</h2>
-
-              <input
-                placeholder="Name"
-                onChange={e => setName(e.target.value)}
-              />
-
-              <input
-                placeholder="Email"
-                onChange={e => setEmail(e.target.value)}
-              />
-
-              <input
-                placeholder="Phone"
-                onChange={e => setPhone(e.target.value)}
-              />
-
-              <button onClick={register}>
-                {loading ? "Registering..." : "Register"}
-              </button>
-
-              <p className="link" onClick={() => setStep("login")}>
-                Back to login
-              </p>
-            </>
-          )}
-
-          {/* FORGOT */}
-          {step === "forgot" && (
-            <>
-              <h2>Forgot Password</h2>
-
-              <input
-                placeholder="Email"
-                onChange={e => setEmail(e.target.value)}
-              />
-
-              <button onClick={sendEmailOtp}>
-                {loading ? "Sending..." : "Send Email OTP"}
-              </button>
-
-              <p className="link" onClick={() => setStep("login")}>
-                Back to login
-              </p>
-            </>
-          )}
-
-          {/* DASHBOARD */}
-          {step === "dashboard" && (
-            <>
-              <h2>Dashboard</h2>
-
-              <button onClick={loadProfile}>
-                View Profile
-              </button>
-
-              <button onClick={loadUsers}>
-                Admin Dashboard
-              </button>
-
-              <button onClick={() => setStep("login")}>
-                Logout
-              </button>
-            </>
-          )}
-
-          {/* PROFILE */}
-          {step === "profile" && profile && (
-            <>
-              <h2>My Profile</h2>
-              <p>Name: {profile.name}</p>
-              <p>Email: {profile.email}</p>
-              <p>Phone: {profile.phone}</p>
-
-              <button onClick={() => setStep("dashboard")}>
-                Back
-              </button>
-            </>
-          )}
-
-          {/* ADMIN */}
-          {step === "admin" && (
-            <>
-              <h2>Admin Users</h2>
-
-              {users.map(u => (
-                <p key={u.id}>
-                  {u.name} - {u.phone}
+                <p className="link" onClick={() => setStep("register")}>
+                  {text[lang].register}
                 </p>
-              ))}
 
-              <button onClick={() => setStep("dashboard")}>
-                Back
-              </button>
-            </>
-          )}
+                <p className="link" onClick={() => setStep("forgot")}>
+                  {text[lang].forgot}
+                </p>
 
-          {/* ERROR */}
-          {error && <p className="error">{error}</p>}
+                <p className="link" onClick={() => setShowStory(true)}>
+                  {text[lang].story}
+                </p>
+              </>
+            )}
 
+            {/* VERIFY */}
+            {step === "verify" && (
+              <>
+                <input
+                  placeholder="Enter OTP"
+                  onChange={e => setOtp(e.target.value)}
+                />
+
+                <button onClick={verifyOtp}>
+                  {loading ? "Verifying..." : "Verify"}
+                </button>
+
+                <p className="timer">
+                  Resend OTP in {timer}s
+                </p>
+              </>
+            )}
+
+            {/* REGISTER */}
+            {step === "register" && (
+              <>
+                <input
+                  placeholder="Name"
+                  onChange={e => setName(e.target.value)}
+                />
+
+                <input
+                  placeholder="Email"
+                  onChange={e => setEmail(e.target.value)}
+                />
+
+                <input
+                  placeholder="Phone"
+                  onChange={e => setPhone(e.target.value)}
+                />
+
+                <button onClick={register}>
+                  {loading ? "Registering..." : "Register"}
+                </button>
+
+                <p className="link" onClick={() => setStep("login")}>
+                  Back to login
+                </p>
+              </>
+            )}
+
+            {/* FORGOT */}
+            {step === "forgot" && (
+              <>
+                <input
+                  placeholder="Email"
+                  onChange={e => setEmail(e.target.value)}
+                />
+
+                <button onClick={sendEmailOtp}>
+                  {loading ? "Sending..." : "Send Email OTP"}
+                </button>
+
+                <p className="link" onClick={() => setStep("login")}>
+                  Back to login
+                </p>
+              </>
+            )}
+
+            {/* DASHBOARD */}
+            {step === "dashboard" && (
+              <>
+                <button onClick={loadProfile}>
+                  View Profile
+                </button>
+
+                <button onClick={loadUsers}>
+                  Admin Dashboard
+                </button>
+
+                <button onClick={() => setStep("login")}>
+                  Logout
+                </button>
+              </>
+            )}
+
+            {/* PROFILE */}
+            {step === "profile" && profile && (
+              <>
+                <p>Name: {profile.name}</p>
+                <p>Email: {profile.email}</p>
+                <p>Phone: {profile.phone}</p>
+
+                <button onClick={() => setStep("dashboard")}>
+                  Back
+                </button>
+              </>
+            )}
+
+            {/* ADMIN */}
+            {step === "admin" && (
+              <>
+                {users.map(u => (
+                  <p key={u.id}>
+                    {u.name} - {u.phone}
+                  </p>
+                ))}
+
+                <button onClick={() => setStep("dashboard")}>
+                  Back
+                </button>
+              </>
+            )}
+
+            {error && <p className="error">{error}</p>}
+
+          </div>
         </div>
       </div>
+
+      {/* FARMER STORY MODAL */}
+      {showStory && (
+        <div className="modal">
+          <div className="modal-box">
+            <h3>🌾 Our Farmers</h3>
+            <p>
+              We work with indigenous farmers and native cows,
+              growing chemical-free food in Tamil Nadu.
+            </p>
+            <button onClick={() => setShowStory(false)}>Close</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

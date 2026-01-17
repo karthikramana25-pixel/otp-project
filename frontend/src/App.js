@@ -188,8 +188,8 @@ function App() {
           {/* LEFT IMAGE */}
           <div className="left">
             <img
-              src="https://images.unsplash.com/photo-1576402187871-8dbf22c99c4c"
-              alt="organic fruits"
+              src="https://images.unsplash.com/photo-1601050690597-df0568f70950"
+               alt="Indian Farmer"
             />
           </div>
 

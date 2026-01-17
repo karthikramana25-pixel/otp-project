@@ -3,20 +3,30 @@ const cors = require("cors");
 const db = require("./db");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const AWS = require("aws-sdk");
 
 const SECRET = process.env.JWT_SECRET || "mysecret";
-const ADMIN_PHONE = "919999999999"; // change this
+const ADMIN_PHONE = "919999999999"; // change to your number
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+/* ================= AWS SNS ================= */
+AWS.config.update({
+  accessKeyId: process.env.AWS_KEY,
+  secretAccessKey: process.env.AWS_SECRET,
+  region: "us-east-1"
+});
+
+const sns = new AWS.SNS();
+
 /* ================= MAIL ================= */
 const mailer = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "yourmail@gmail.com",
-    pass: "APP_PASSWORD"
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS
   }
 });
 
@@ -27,20 +37,29 @@ function generateOTP() {
 
 /* ================= SEND SMS OTP ================= */
 app.post("/send-otp", async (req, res) => {
-  const { phone } = req.body;
+  try {
+    const { phone } = req.body;
 
-  const otp = generateOTP();
-  const expires = new Date(Date.now() + 5 * 60000);
+    const otp = generateOTP();
+    const expires = new Date(Date.now() + 5 * 60000);
 
-  await db.query(
-    `INSERT INTO otps(identifier,otp,purpose,expires_at)
-     VALUES($1,$2,'login',$3)`,
-    [phone, otp, expires]
-  );
+    await db.query(
+      `INSERT INTO otps(identifier,otp,purpose,expires_at)
+       VALUES($1,$2,'login',$3)`,
+      [phone, otp, expires]
+    );
 
-  console.log("OTP (testing):", otp);
+    await sns.publish({
+      Message: `Your SK Organics OTP is ${otp}`,
+      PhoneNumber: `+91${phone}`
+    }).promise();
 
-  res.json({ message: "OTP sent" });
+    res.json({ message: "OTP sent to your mobile" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "SMS failed" });
+  }
 });
 
 /* ================= VERIFY OTP ================= */
@@ -80,6 +99,7 @@ app.post("/verify-otp", async (req, res) => {
 /* ================= JWT MIDDLEWARE ================= */
 function auth(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
+
   if (!token)
     return res.status(401).json({ message: "Token missing" });
 
@@ -105,7 +125,7 @@ app.post("/register", async (req, res) => {
     return res.status(400).json({ message: "User already exists" });
 
   await db.query(
-    "INSERT INTO users(name,email,phone) VALUES($1,$2,$3)",
+    "INSERT INTO users(name,email,phone,role) VALUES($1,$2,$3,'user')",
     [name, email, phone]
   );
 
@@ -130,21 +150,6 @@ app.post("/send-email-otp", async (req,res)=>{
     subject: "Password reset OTP",
     text: `Your OTP is ${otp}`
   });
-
-  res.json({message:"Email OTP sent"});
-});
-
-/* ================= FORGOT PASSWORD ================= */
-app.post("/forgot-password", async (req,res)=>{
-  const { email } = req.body;
-
-  const user = await db.query(
-    "SELECT * FROM users WHERE email=$1",
-    [email]
-  );
-
-  if(!user.rows.length)
-    return res.status(404).json({message:"User not found"});
 
   res.json({message:"OTP sent to email"});
 });

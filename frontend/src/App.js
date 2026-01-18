@@ -179,8 +179,8 @@ function App() {
 
       {/* FLOATING FRUITS */}
       <div className="floating">
-        <img src="/images/apple.png" alt="apple" />
-        <img src="/images/banana.png" alt="banana" />
+        <img src="/images/apple.jpg" alt="apple" />
+        <img src="/images/banana.jpg" alt="banana" />
       </div>
 
       <div className="overlay">
@@ -189,7 +189,7 @@ function App() {
           {/* LEFT IMAGE */}
           <div className="left">
             <img
-              src="/images/orange.png"
+              src="/images/orange.jpg"
               alt="Organic"
             />
           </div>

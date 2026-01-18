@@ -4,10 +4,8 @@ import "./style.css";
 function App() {
 
   const [step, setStep] = useState("login");
-
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
@@ -144,9 +142,7 @@ function App() {
   /* PROFILE */
   const loadProfile = async () => {
     const res = await fetch("/profile", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     });
 
     const data = await res.json();
@@ -157,9 +153,7 @@ function App() {
   /* ADMIN */
   const loadUsers = async () => {
     const res = await fetch("/admin/users", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     });
 
     const data = await res.json();
@@ -168,10 +162,12 @@ function App() {
   };
 
   return (
-    <div className={dark ? "bg dark" : "bg"}>
-
-      {/* FALLING LEAVES */}
-      <div className="leaves"></div>
+    <div
+      className={dark ? "bg dark" : "bg"}
+      style={{
+        backgroundImage: `url(${process.env.PUBLIC_URL}/images/farm.jpg)`
+      }}
+    >
 
       {/* TOP BAR */}
       <div className="top-bar">
@@ -181,19 +177,24 @@ function App() {
         </button>
       </div>
 
-      <div className="overlay">
+      {/* FLOATING FRUITS */}
+      <div className="floating">
+        <img src="/images/apple.png" alt="apple" />
+        <img src="/images/banana.png" alt="banana" />
+      </div>
 
+      <div className="overlay">
         <div className="login-card">
 
           {/* LEFT IMAGE */}
           <div className="left">
             <img
-              src="/images/orange.png" alt="orange"/>
-               alt="Indian Farmer"
+              src="/images/orange.png"
+              alt="Organic"
             />
           </div>
 
-          {/* RIGHT FORM */}
+          {/* RIGHT */}
           <div className="right">
 
             <h2>{text[lang].title}</h2>
@@ -242,28 +243,13 @@ function App() {
                 </p>
               </>
             )}
-			{/* FLOATING */}
-			<div className="floating">
-            <img src="/images/apple.jpg" alt="apple"/>
-            <img src="/images/banana.jpg" alt="banana"/>
-            </div>
+
             {/* REGISTER */}
             {step === "register" && (
               <>
-                <input
-                  placeholder="Name"
-                  onChange={e => setName(e.target.value)}
-                />
-
-                <input
-                  placeholder="Email"
-                  onChange={e => setEmail(e.target.value)}
-                />
-
-                <input
-                  placeholder="Phone"
-                  onChange={e => setPhone(e.target.value)}
-                />
+                <input placeholder="Name" onChange={e => setName(e.target.value)} />
+                <input placeholder="Email" onChange={e => setEmail(e.target.value)} />
+                <input placeholder="Phone" onChange={e => setPhone(e.target.value)} />
 
                 <button onClick={register}>
                   {loading ? "Registering..." : "Register"}
@@ -296,17 +282,9 @@ function App() {
             {/* DASHBOARD */}
             {step === "dashboard" && (
               <>
-                <button onClick={loadProfile}>
-                  View Profile
-                </button>
-
-                <button onClick={loadUsers}>
-                  Admin Dashboard
-                </button>
-
-                <button onClick={() => setStep("login")}>
-                  Logout
-                </button>
+                <button onClick={loadProfile}>View Profile</button>
+                <button onClick={loadUsers}>Admin Dashboard</button>
+                <button onClick={() => setStep("login")}>Logout</button>
               </>
             )}
 
@@ -317,9 +295,7 @@ function App() {
                 <p>Email: {profile.email}</p>
                 <p>Phone: {profile.phone}</p>
 
-                <button onClick={() => setStep("dashboard")}>
-                  Back
-                </button>
+                <button onClick={() => setStep("dashboard")}>Back</button>
               </>
             )}
 
@@ -327,24 +303,18 @@ function App() {
             {step === "admin" && (
               <>
                 {users.map(u => (
-                  <p key={u.id}>
-                    {u.name} - {u.phone}
-                  </p>
+                  <p key={u.id}>{u.name} - {u.phone}</p>
                 ))}
-
-                <button onClick={() => setStep("dashboard")}>
-                  Back
-                </button>
+                <button onClick={() => setStep("dashboard")}>Back</button>
               </>
             )}
 
             {error && <p className="error">{error}</p>}
-
           </div>
         </div>
       </div>
 
-      {/* FARMER STORY MODAL */}
+      {/* STORY */}
       {showStory && (
         <div className="modal">
           <div className="modal-box">

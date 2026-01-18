@@ -244,8 +244,8 @@ function App() {
             )}
 			{/* FLOATING */}
 			<div className="floating">
-            <img src="/images/apple.png" alt="apple"/>
-            <img src="/images/banana.png" alt="banana"/>
+            <img src="/images/apple.jpg" alt="apple"/>
+            <img src="/images/banana.jpg" alt="banana"/>
             </div>
             {/* REGISTER */}
             {step === "register" && (

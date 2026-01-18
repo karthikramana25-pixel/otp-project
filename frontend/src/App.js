@@ -176,13 +176,7 @@ function App() {
           {lang === "en" ? "தமிழ்" : "English"}
         </button>
       </div>
-
-      {/* FLOATING FRUITS */}
-      <div className="floating">
-        <img src="/images/apple.jpg" alt="apple" />
-        <img src="/images/banana.jpg" alt="banana" />
-      </div>
-
+	  
       <div className="overlay">
         <div className="login-card">
 

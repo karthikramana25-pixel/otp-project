@@ -6,41 +6,51 @@ function App() {
   const [step, setStep] = useState("login");
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [timer, setTimer] = useState(60);
 
-  const [token, setToken] = useState("");
-  const [profile, setProfile] = useState(null);
-  const [users, setUsers] = useState([]);
+  const [cart, setCart] = useState([]);
 
-  const [dark, setDark] = useState(false);
-  const [lang, setLang] = useState("en");
-  const [showStory, setShowStory] = useState(false);
-
-  const text = {
-    en: {
-      title: "SK ORGANICS",
-      tagline: "Fresh • Natural • Healthy",
-      mobile: "Enter mobile number",
-      send: "Send OTP",
-      story: "Our Farmer Story",
-      register: "Register",
-      forgot: "Forgot password?"
+  /* PRODUCTS */
+  const products = [
+    {
+      id: 1,
+      name: "A2 Cow Milk",
+      price: 80,
+      desc: "Fresh native cow milk - 1 litre",
+      img: "/images/milk.jpg"
     },
-    ta: {
-      title: "எஸ்.கே ஆர்கானிக்ஸ்",
-      tagline: "சுத்தம் • இயற்கை • ஆரோக்கியம்",
-      mobile: "மொபைல் எண்ணை உள்ளிடவும்",
-      send: "OTP அனுப்பவும்",
-      story: "விவசாயி கதை",
-      register: "பதிவு செய்ய",
-      forgot: "கடவுச்சொல் மறந்துவிட்டதா?"
+    {
+      id: 2,
+      name: "Millets Rice",
+      price: 120,
+      desc: "Healthy millets rice - 1 kg",
+      img: "/images/rice.jpg"
+    },
+    {
+      id: 3,
+      name: "Raw Honey",
+      price: 450,
+      desc: "Forest raw honey - 1 kg",
+      img: "/images/honey.jpg"
+    },
+    {
+      id: 4,
+      name: "Coconut Oil",
+      price: 300,
+      desc: "Cold pressed coconut oil - 1 kg",
+      img: "/images/coconut.jpg"
+    },
+    {
+      id: 5,
+      name: "Groundnut Oil",
+      price: 280,
+      desc: "Wood pressed groundnut oil - 1 kg",
+      img: "/images/groundnut.jpg"
     }
-  };
+  ];
 
   /* TIMER */
   useEffect(() => {
@@ -91,236 +101,119 @@ function App() {
       return;
     }
 
-    setToken(data.token);
-    setStep("dashboard");
+    setStep("products");
   };
 
-  /* REGISTER */
-  const register = async () => {
-    setLoading(true);
-    setError("");
-
-    const res = await fetch("/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, phone })
-    });
-
-    const data = await res.json();
-    setLoading(false);
-
-    if (!res.ok) {
-      setError(data.message);
-      return;
-    }
-
-    alert("Registered successfully");
-    setStep("login");
+  /* CART */
+  const addToCart = (p) => {
+    setCart([...cart, p]);
   };
 
-  /* EMAIL OTP */
-  const sendEmailOtp = async () => {
-    setLoading(true);
-    setError("");
-
-    const res = await fetch("/send-email-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email })
-    });
-
-    setLoading(false);
-
-    if (!res.ok) {
-      setError("Failed to send email OTP");
-      return;
-    }
-
-    alert("OTP sent to your email");
+  const removeItem = (i) => {
+    setCart(cart.filter((_, idx) => idx !== i));
   };
 
-  /* PROFILE */
-  const loadProfile = async () => {
-    const res = await fetch("/profile", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const data = await res.json();
-    setProfile(data);
-    setStep("profile");
-  };
-
-  /* ADMIN */
-  const loadUsers = async () => {
-    const res = await fetch("/admin/users", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const data = await res.json();
-    setUsers(data);
-    setStep("admin");
-  };
+  const total = cart.reduce((s, i) => s + i.price, 0);
 
   return (
-    <div
-      className={dark ? "bg dark" : "bg"}
-      style={{
-        backgroundImage: `url(${process.env.PUBLIC_URL}/images/farm.jpg)`
-      }}
-    >
+    <div className="page">
 
-      {/* TOP BAR */}
-      <div className="top-bar">
-        <button onClick={() => setDark(!dark)}>🌙</button>
-        <button onClick={() => setLang(lang === "en" ? "ta" : "en")}>
-          {lang === "en" ? "தமிழ்" : "English"}
-        </button>
-      </div>
-	  
-      <div className="overlay">
-        <div className="login-card">
+      {/* LOGIN */}
+      {step === "login" && (
+        <div className="card">
+          <h2>Login with OTP</h2>
 
-          {/* LEFT IMAGE */}
-          <div className="left">
-            <img
-              src="/images/orange.jpg"
-              alt="Organic"
-            />
-          </div>
+          <input
+            placeholder="Mobile number"
+            onChange={e => setPhone(e.target.value)}
+          />
 
-          {/* RIGHT */}
-          <div className="right">
+          <button onClick={sendOtp}>
+            {loading ? "Sending..." : "Send OTP"}
+          </button>
 
-            <h2>{text[lang].title}</h2>
-            <p>{text[lang].tagline}</p>
-
-            {/* LOGIN */}
-            {step === "login" && (
-              <>
-                <input
-                  placeholder={text[lang].mobile}
-                  onChange={e => setPhone(e.target.value)}
-                />
-
-                <button className="pulse" onClick={sendOtp}>
-                  {loading ? "Sending..." : text[lang].send}
-                </button>
-
-                <p className="link" onClick={() => setStep("register")}>
-                  {text[lang].register}
-                </p>
-
-                <p className="link" onClick={() => setStep("forgot")}>
-                  {text[lang].forgot}
-                </p>
-
-                <p className="link" onClick={() => setShowStory(true)}>
-                  {text[lang].story}
-                </p>
-              </>
-            )}
-
-            {/* VERIFY */}
-            {step === "verify" && (
-              <>
-                <input
-                  placeholder="Enter OTP"
-                  onChange={e => setOtp(e.target.value)}
-                />
-
-                <button onClick={verifyOtp}>
-                  {loading ? "Verifying..." : "Verify"}
-                </button>
-
-                <p className="timer">
-                  Resend OTP in {timer}s
-                </p>
-              </>
-            )}
-
-            {/* REGISTER */}
-            {step === "register" && (
-              <>
-                <input placeholder="Name" onChange={e => setName(e.target.value)} />
-                <input placeholder="Email" onChange={e => setEmail(e.target.value)} />
-                <input placeholder="Phone" onChange={e => setPhone(e.target.value)} />
-
-                <button onClick={register}>
-                  {loading ? "Registering..." : "Register"}
-                </button>
-
-                <p className="link" onClick={() => setStep("login")}>
-                  Back to login
-                </p>
-              </>
-            )}
-
-            {/* FORGOT */}
-            {step === "forgot" && (
-              <>
-                <input
-                  placeholder="Email"
-                  onChange={e => setEmail(e.target.value)}
-                />
-
-                <button onClick={sendEmailOtp}>
-                  {loading ? "Sending..." : "Send Email OTP"}
-                </button>
-
-                <p className="link" onClick={() => setStep("login")}>
-                  Back to login
-                </p>
-              </>
-            )}
-
-            {/* DASHBOARD */}
-            {step === "dashboard" && (
-              <>
-                <button onClick={loadProfile}>View Profile</button>
-                <button onClick={loadUsers}>Admin Dashboard</button>
-                <button onClick={() => setStep("login")}>Logout</button>
-              </>
-            )}
-
-            {/* PROFILE */}
-            {step === "profile" && profile && (
-              <>
-                <p>Name: {profile.name}</p>
-                <p>Email: {profile.email}</p>
-                <p>Phone: {profile.phone}</p>
-
-                <button onClick={() => setStep("dashboard")}>Back</button>
-              </>
-            )}
-
-            {/* ADMIN */}
-            {step === "admin" && (
-              <>
-                {users.map(u => (
-                  <p key={u.id}>{u.name} - {u.phone}</p>
-                ))}
-                <button onClick={() => setStep("dashboard")}>Back</button>
-              </>
-            )}
-
-            {error && <p className="error">{error}</p>}
-          </div>
-        </div>
-      </div>
-
-      {/* STORY */}
-      {showStory && (
-        <div className="modal">
-          <div className="modal-box">
-            <h3>🌾 Our Farmers</h3>
-            <p>
-              We work with indigenous farmers and native cows,
-              growing chemical-free food in Tamil Nadu.
-            </p>
-            <button onClick={() => setShowStory(false)}>Close</button>
-          </div>
+          {error && <p className="error">{error}</p>}
         </div>
       )}
+
+      {/* VERIFY */}
+      {step === "verify" && (
+        <div className="card">
+          <h2>Verify OTP</h2>
+
+          <input
+            placeholder="Enter OTP"
+            onChange={e => setOtp(e.target.value)}
+          />
+
+          <button onClick={verifyOtp}>
+            {loading ? "Verifying..." : "Verify"}
+          </button>
+
+          <p className="timer">
+            Resend OTP in {timer}s
+          </p>
+
+          {error && <p className="error">{error}</p>}
+        </div>
+      )}
+
+      {/* PRODUCTS */}
+      {step === "products" && (
+        <>
+          <h2 className="title">🛒 Our Products</h2>
+
+          <div className="products">
+            {products.map(p => (
+              <div className="product" key={p.id}>
+                <img src={p.img} alt={p.name} />
+                <h4>{p.name}</h4>
+                <p>{p.desc}</p>
+                <b>₹ {p.price}</b>
+
+                <button onClick={() => addToCart(p)}>
+                  Add to Cart
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="cart-bar">
+            <p>Items: {cart.length}</p>
+            <p>Total: ₹ {total}</p>
+
+            <button onClick={() => setStep("checkout")}>
+              Checkout
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* CHECKOUT */}
+      {step === "checkout" && (
+        <div className="card">
+          <h2>🧾 Checkout</h2>
+
+          {cart.map((c, i) => (
+            <div className="row" key={i}>
+              <span>{c.name}</span>
+              <span>₹ {c.price}</span>
+              <button onClick={() => removeItem(i)}>❌</button>
+            </div>
+          ))}
+
+          <h3>Total: ₹ {total}</h3>
+
+          <button onClick={() => alert("Order placed!")}>
+            Place Order
+          </button>
+
+          <button onClick={() => setStep("products")}>
+            Back
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

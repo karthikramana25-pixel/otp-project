@@ -188,7 +188,7 @@ function App() {
           {/* LEFT IMAGE */}
           <div className="left">
             <img
-              src="https://images.unsplash.com/photo-1601050690597-df0568f70950"
+              src="/images/orange.png" alt="orange"/>
                alt="Indian Farmer"
             />
           </div>
@@ -242,7 +242,11 @@ function App() {
                 </p>
               </>
             )}
-
+			{/* FLOATING */}
+			<div className="floating">
+            <img src="/images/apple.png" alt="apple"/>
+            <img src="/images/banana.png" alt="banana"/>
+            </div>
             {/* REGISTER */}
             {step === "register" && (
               <>
